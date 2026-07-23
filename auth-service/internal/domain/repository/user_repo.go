@@ -5,7 +5,7 @@ import (
 )
 
 type UserRepo interface {
-	Create(entity entity.User) error
+	Create(entity entity.User) (entity.User, error)
 	GetById(id string) (entity.User, error)
 	GetByEmail(email string) (entity.User, error)
 }

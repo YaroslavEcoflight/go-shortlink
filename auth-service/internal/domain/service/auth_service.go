@@ -2,7 +2,7 @@ package service
 
 import "auth-service/internal/domain/entity"
 
-type UserCase interface {
+type AuthSerivce interface {
 	Register(email, username, pass string) (*entity.User, error)
 	Login(email, pass string) (*entity.Token, error)
 	Logout(refreshToken string) error
