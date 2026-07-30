@@ -4,6 +4,8 @@ import (
 	"auth-service/internal/domain/entity"
 	"auth-service/internal/domain/repository"
 	"auth-service/internal/domain/service"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type authService struct {
@@ -15,11 +17,12 @@ func NewAuthService(repo repository.UserRepo) service.AuthSerivce {
 }
 
 func (s *authService) Register(user entity.User) (entity.User, error) {
-	created, err := s.repo.Create(user)
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
 	if err != nil {
 		return entity.User{}, err
 	}
-	return created, nil
+	user.PasswordHash = string(hash)
+	return s.repo.Create(user)
 }
 
 func (s *authService) Login(email, pass string) (*entity.Token, error) {
