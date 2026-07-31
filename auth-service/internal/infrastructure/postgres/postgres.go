@@ -7,8 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func New() (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(""), &gorm.Config{})
+func New(dsn string) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

@@ -39,6 +39,15 @@ type (
 	}
 )
 
+func (p pg) DSN() string {
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		p.Host, p.Port, p.User, p.Password, p.DBName, p.SSLMode)
+}
+
+func (r redis) URL() string {
+	return r.Addr
+}
+
 func NewConfig() (*Config, error) {
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {

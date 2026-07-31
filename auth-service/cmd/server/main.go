@@ -1,7 +1,13 @@
 package main
 
-import "auth-service/internal/app"
+import (
+	"log"
+
+	"auth-service/internal/app"
+)
 
 func main() {
-	app.Run()
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
