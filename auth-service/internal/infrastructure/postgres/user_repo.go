@@ -29,7 +29,11 @@ func (r *userRepository) GetById(id string) (entity.User, error) {
 }
 
 func (r *userRepository) GetByEmail(email string) (entity.User, error) {
-	return entity.User{}, nil
+	var m models.User
+	if err := r.db.Where("email = ?", email).First(&m).Error; err != nil {
+		return entity.User{}, err
+	}
+	return to_entity(m), nil
 }
 
 func to_entity(user models.User) entity.User {

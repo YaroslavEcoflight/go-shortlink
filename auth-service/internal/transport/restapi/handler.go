@@ -31,3 +31,17 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	}
 	return c.Status(201).JSON(fiber.Map{"message": "created"})
 }
+
+func (h *AuthHandler) Login(c *fiber.Ctx) error {
+	var body UserLoginRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid credentials"})
+	}
+
+	token, err := h.svc.Login(body.Email, body.Password)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid credentials"})
+	}
+
+	return c.Status(200).JSON(token)
+}

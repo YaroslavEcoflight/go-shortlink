@@ -8,15 +8,20 @@ import (
 
 type (
 	Config struct {
-		App   app `envPrefix:"APP_"`
-		HTTP  http
-		Pg    pg    `envPrefix:"POSTGRES_"`
-		Redis redis `envPrefix:"REDIS_"`
+		App    app `envPrefix:"APP_"`
+		HTTP   http
+		Secret secret
+		Pg     pg    `envPrefix:"POSTGRES_"`
+		Redis  redis `envPrefix:"REDIS_"`
 	}
 
 	app struct {
 		Name    string `env:"NAME,required"`
 		Version string `env:"VERSION,required"`
+	}
+
+	secret struct {
+		JWTSecret string `env:"JWT_SECRET,required"`
 	}
 
 	http struct {
