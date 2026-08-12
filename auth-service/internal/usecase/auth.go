@@ -73,13 +73,58 @@ func (s *authService) Login(email, pass string) (*entity.Token, error) {
 }
 
 func (s *authService) Logout(refreshToken string) error {
+	if err := s.token_repo.Delete(refreshToken); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s *authService) RefreshToken(refreshToken string) (*entity.Token, error) {
-	return nil, nil
+	userID, err := s.token_repo.Get(refreshToken)
+	if err != nil {
+		return nil, errors.New("Invalid or expired refresh token")
+	}
+	now := time.Now()
+	accessExpiry := now.Add(15 * time.Minute)
+	claims := jwt.MapClaims{
+		"sub": userID,
+		"exp": accessExpiry.Unix(),
+		"iat": now.Unix(),
+	}
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.jwtSecret))
+	if err != nil {
+		return nil, err
+	}
+	return &entity.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    accessExpiry.Unix(),
+	}, nil
 }
 
 func (s *authService) ValidateToken(accessToken string) (*entity.User, error) {
-	return nil, nil
+	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(s.jwtSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("Invalid or expired access token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("Invalid claims")
+	}
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		return nil, errors.New("Invalid sub claim")
+	}
+
+	user, err := s.user_repo.GetById(userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+	return &user, nil
 }
