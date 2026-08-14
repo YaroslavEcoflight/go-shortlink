@@ -1,0 +1,69 @@
+services:
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "8080:8080"
+    environment:
+      APP_NAME: auth-service
+      APP_VERSION: 0.1.0
+      HTTP_PORT: 8080
+      JWT_SECRET: supersecretkey
+      POSTGRES_HOST: pg
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DBNAME: auth
+      POSTGRES_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+      REDIS_HOST: ""
+      REDIS_PORT: ""
+    depends_on:
+      pg:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - shortlink
+
+  pg:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shortlink
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shortlink
+
+volumes:
+  pg_data:
+  redis_data:
+
+networks:
+  shortlink:
+    driver: bridge

@@ -25,7 +25,11 @@ func (r *userRepository) Create(user entity.User) (entity.User, error) {
 }
 
 func (r *userRepository) GetById(id string) (entity.User, error) {
-	return entity.User{}, nil
+	var m models.User
+	if err := r.db.First(&m, "id = ?", id).Error; err != nil {
+		return entity.User{}, err
+	}
+	return to_entity(m), nil
 }
 
 func (r *userRepository) GetByEmail(email string) (entity.User, error) {
@@ -42,6 +46,8 @@ func to_entity(user models.User) entity.User {
 		Username:     user.Username,
 		PasswordHash: user.PasswordHash,
 		Email:        user.Email,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
 	}
 }
 

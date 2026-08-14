@@ -14,3 +14,11 @@ type UserLoginRequest struct {
 type UserLogoutRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type UserRefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+type UserValidateTokenRequest struct {
+	AccessToken string `json:"access_token"`
+}

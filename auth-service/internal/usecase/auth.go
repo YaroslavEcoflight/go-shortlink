@@ -14,13 +14,13 @@ import (
 )
 
 type authService struct {
-	user_repo  repository.UserRepo
-	token_repo repository.TokenRepo
-	jwtSecret  string
+	userRepo  repository.UserRepo
+	tokenRepo repository.TokenRepo
+	jwtSecret string
 }
 
-func NewAuthService(repo repository.UserRepo) service.AuthSerivce {
-	return &authService{user_repo: repo}
+func NewAuthService(userRepo repository.UserRepo, tokenRepo repository.TokenRepo, jwtSecret string) service.AuthService {
+	return &authService{userRepo: userRepo, tokenRepo: tokenRepo, jwtSecret: jwtSecret}
 }
 
 func (s *authService) Register(user entity.User) (entity.User, error) {
@@ -29,11 +29,11 @@ func (s *authService) Register(user entity.User) (entity.User, error) {
 		return entity.User{}, err
 	}
 	user.PasswordHash = string(hash)
-	return s.user_repo.Create(user)
+	return s.userRepo.Create(user)
 }
 
 func (s *authService) Login(email, pass string) (*entity.Token, error) {
-	user, err := s.user_repo.GetByEmail(email)
+	user, err := s.userRepo.GetByEmail(email)
 	if err != nil {
 		return nil, errors.New("invalid credentials")
 	}
@@ -66,24 +66,29 @@ func (s *authService) Login(email, pass string) (*entity.Token, error) {
 		ExpiresIn:    accessExpiry.Unix(),
 	}
 
-	if err := s.token_repo.Save(user.ID, token, 7*24*time.Hour); err != nil {
+	if err := s.tokenRepo.Save(user.ID, token, 7*24*time.Hour); err != nil {
 		return nil, err
 	}
 	return &token, nil
 }
 
 func (s *authService) Logout(refreshToken string) error {
-	if err := s.token_repo.Delete(refreshToken); err != nil {
+	if err := s.tokenRepo.Delete(refreshToken); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *authService) RefreshToken(refreshToken string) (*entity.Token, error) {
-	userID, err := s.token_repo.Get(refreshToken)
+	userID, err := s.tokenRepo.Get(refreshToken)
 	if err != nil {
 		return nil, errors.New("Invalid or expired refresh token")
 	}
+
+	if err := s.tokenRepo.Delete(refreshToken); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	accessExpiry := now.Add(15 * time.Minute)
 	claims := jwt.MapClaims{
@@ -95,15 +100,26 @@ func (s *authService) RefreshToken(refreshToken string) (*entity.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &entity.Token{
+
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return nil, err
+	}
+	newRefreshToken := hex.EncodeToString(b)
+
+	token := entity.Token{
 		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		RefreshToken: newRefreshToken,
 		ExpiresIn:    accessExpiry.Unix(),
-	}, nil
+	}
+	if err := s.tokenRepo.Save(userID, token, 7*24*time.Hour); err != nil {
+		return nil, err
+	}
+	return &token, nil
 }
 
 func (s *authService) ValidateToken(accessToken string) (*entity.User, error) {
-	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
@@ -122,7 +138,7 @@ func (s *authService) ValidateToken(accessToken string) (*entity.User, error) {
 		return nil, errors.New("Invalid sub claim")
 	}
 
-	user, err := s.user_repo.GetById(userID)
+	user, err := s.userRepo.GetById(userID)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}

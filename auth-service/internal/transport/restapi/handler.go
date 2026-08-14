@@ -5,14 +5,13 @@ import (
 	"auth-service/internal/domain/service"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/redis/go-redis/v9/auth"
 )
 
 type AuthHandler struct {
-	svc service.AuthSerivce
+	svc service.AuthService
 }
 
-func NewAuthHandler(svc service.AuthSerivce) AuthHandler {
+func NewAuthHandler(svc service.AuthService) AuthHandler {
 	return AuthHandler{svc: svc}
 }
 
@@ -60,9 +59,35 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) Refresh(c *fiber.Ctx) error {
-	return nil
+	var body UserRefreshRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+
+	token, err := h.svc.RefreshToken(body.RefreshToken)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "token not found"})
+	}
+	return c.JSON(UserRefreshTokenResponse{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+	})
 }
 
-func (h *AuthHandler) ValitateToken(c *fiber.Ctx) error {
-	return nil
+func (h *AuthHandler) ValidateToken(c *fiber.Ctx) error {
+	var body UserValidateTokenRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	user, err := h.svc.ValidateToken(body.AccessToken)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+	return c.Status(200).JSON(UserValidateTokenResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
 }

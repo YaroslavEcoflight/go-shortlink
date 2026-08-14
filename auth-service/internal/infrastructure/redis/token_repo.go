@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/domain/entity"
 	"auth-service/internal/domain/repository"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -27,5 +28,12 @@ func (r *TokenRepo) Get(refreshToken string) (string, error) {
 }
 
 func (r *TokenRepo) Delete(refreshToken string) error {
-	return r.client.Del(r.ctx, "refresh:"+refreshToken).Err()
+	n, err := r.client.Del(r.ctx, "refresh:"+refreshToken).Result()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return fmt.Errorf("token not found")
+	}
+	return nil
 }
