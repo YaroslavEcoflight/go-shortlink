@@ -8,17 +8,17 @@ import (
 )
 
 type LinkRepo struct {
-	db gorm.DB
+	db *gorm.DB
 }
 
-func NewLinkRepo(db gorm.DB) LinkRepo {
+func NewLinkRepo(db *gorm.DB) LinkRepo {
 	return LinkRepo{db: db}
 }
 
 func (r *LinkRepo) Create(e entity.Link) (entity.Link, error) {
 	m := toModel(e)
 	if err := r.db.Create(&m).Error; err != nil {
-		return entity.Link{}, nil
+		return entity.Link{}, err
 	}
 	return toEntity(m), nil
 }
