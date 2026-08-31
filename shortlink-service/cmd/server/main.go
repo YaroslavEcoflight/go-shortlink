@@ -1,5 +1,7 @@
-package server
+package main
+
+import "shortlink-service/internal/app"
 
 func main() {
-	// точка запуска всего приложения
+	app.Run()
 }

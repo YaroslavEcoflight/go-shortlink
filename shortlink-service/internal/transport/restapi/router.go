@@ -8,8 +8,11 @@ import (
 
 func RegisterRouters(r fiber.Router, svc service.LinkService) {
 	h := NewLinkHandler(svc)
-	link := r.Group("/link")
-	link.Post("/shorten", h.Create)
-	link.Delete(":code", h.Delete)
-}
 
+	r.Get("/:code", h.Redirect)
+
+	v1 := r.Group("/api/v1")
+	link := v1.Group("/link")
+	link.Post("/shorten", h.Create)
+	link.Delete("/:code", h.Delete)
+}

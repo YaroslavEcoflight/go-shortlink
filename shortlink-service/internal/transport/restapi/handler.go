@@ -40,3 +40,12 @@ func (h *LinkHandler) Delete(c *fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(fiber.Map{"error": "code deleted"})
 }
+
+func (h *LinkHandler) Redirect(c *fiber.Ctx) error {
+	code := c.Params("code")
+	link, err := h.svc.GetByCode(code)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "not found"})
+	}
+	return c.Redirect(link.Url, 302)
+}

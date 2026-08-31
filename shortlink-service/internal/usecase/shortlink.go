@@ -23,9 +23,9 @@ func (svc *LinkService) Create(ent entity.Link) (entity.Link, error) {
 }
 
 func (svc *LinkService) Delete(code string) error {
-	return nil
+	return svc.repo.Delete(code)
 }
 
 func (svc *LinkService) GetByCode(code string) (entity.Link, error) {
-	return entity.Link{}, nil
+	return svc.repo.GetByCode(code)
 }

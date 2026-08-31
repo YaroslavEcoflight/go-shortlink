@@ -3,6 +3,7 @@ package postgres
 import (
 	"shortlink-service/internal/domain/entity"
 	"shortlink-service/internal/infrastructure/postgres/models"
+	"shortlink-service/internal/pkg/base62"
 
 	"gorm.io/gorm"
 )
@@ -17,14 +18,21 @@ func NewLinkRepo(db *gorm.DB) LinkRepo {
 
 func (r *LinkRepo) Create(e entity.Link) (entity.Link, error) {
 	m := toModel(e)
-	if err := r.db.Create(&m).Error; err != nil {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&m).Error; err != nil {
+			return err
+		}
+		m.Code = base62.Encode(m.ID)
+		return tx.Save(&m).Error
+	})
+	if err != nil {
 		return entity.Link{}, err
 	}
 	return toEntity(m), nil
 }
 
 func (r *LinkRepo) Delete(code string) error {
-	return r.db.Delete(&models.Link{Code: code}).Error
+	return r.db.Where("code = ?", code).Delete(&models.Link{}).Error
 }
 
 func (r *LinkRepo) GetByCode(code string) (entity.Link, error) {
