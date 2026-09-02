@@ -8,9 +8,10 @@ import (
 
 type (
 	Config struct {
-		App  app `envPrefix:"APP_"`
-		Http http
-		Pg   pg
+		App    app `envPrefix:"APP_"`
+		Http   http
+		Pg     pg
+		Secret secret
 	}
 
 	app struct {
