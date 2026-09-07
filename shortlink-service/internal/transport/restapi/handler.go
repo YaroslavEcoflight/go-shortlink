@@ -31,14 +31,11 @@ func (h *LinkHandler) Create(c *fiber.Ctx) error {
 }
 
 func (h *LinkHandler) Delete(c *fiber.Ctx) error {
-	var body DeleteRequest
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
-	}
-	if err := h.svc.Delete(body.Code); err != nil {
+	code := c.Params("code")
+	if err := h.svc.Delete(code); err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "code not found"})
 	}
-	return c.Status(200).JSON(fiber.Map{"error": "code deleted"})
+	return c.Status(200).JSON(fiber.Map{"message": "code deleted"})
 }
 
 func (h *LinkHandler) Redirect(c *fiber.Ctx) error {
