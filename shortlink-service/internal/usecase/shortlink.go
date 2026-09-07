@@ -7,25 +7,41 @@ import (
 )
 
 type LinkService struct {
-	repo repository.LinkRepo
+	repo  repository.LinkRepo
+	cache repository.LinkCache
 }
 
-func NewLinkService(repo repository.LinkRepo) service.LinkService {
-	return &LinkService{repo: repo}
+func NewLinkService(repo repository.LinkRepo, cache repository.LinkCache) service.LinkService {
+	return &LinkService{repo: repo, cache: cache}
 }
 
-func (svc *LinkService) Create(ent entity.Link) (entity.Link, error) {
-	res, err := svc.repo.Create(ent)
+func (svc *LinkService) Create(link entity.Link) (entity.Link, error) {
+	res, err := svc.repo.Create(link)
 	if err != nil {
 		return entity.Link{}, err
 	}
+	_ = svc.cache.Set(res.Code, res)
 	return res, nil
 }
 
 func (svc *LinkService) Delete(code string) error {
-	return svc.repo.Delete(code)
+	if err := svc.repo.Delete(code); err != nil {
+		return err
+	}
+	_ = svc.cache.Delete(code)
+	return nil
 }
 
 func (svc *LinkService) GetByCode(code string) (entity.Link, error) {
-	return svc.repo.GetByCode(code)
+	if link, err := svc.cache.Get(code); err == nil {
+		return link, nil
+	}
+
+	link, err := svc.repo.GetByCode(code)
+	if err != nil {
+		return entity.Link{}, err
+	}
+
+	_ = svc.cache.Set(code, link)
+	return link, nil
 }

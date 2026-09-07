@@ -1,10 +1,12 @@
 package app
 
 import (
+	"context"
 	"log"
 	"shortlink-service/config"
 	"shortlink-service/internal/infrastructure/postgres"
 	inframodels "shortlink-service/internal/infrastructure/postgres/models"
+	"shortlink-service/internal/infrastructure/redis"
 	"shortlink-service/internal/transport/restapi"
 	"shortlink-service/internal/usecase"
 
@@ -12,7 +14,15 @@ import (
 )
 
 func Run() {
+
+	ctx := context.Background()
+
 	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rdb, err := redis.New(ctx, *cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,11 +33,12 @@ func Run() {
 	}
 	db.AutoMigrate(&inframodels.Link{})
 
+	linkCache := redis.NewLinkRepos(ctx, rdb)
 	linkRepo := postgres.NewLinkRepo(db)
-	linkSvc := usecase.NewLinkService(&linkRepo)
+	linkSvc := usecase.NewLinkService(&linkRepo, linkCache)
 
 	app := fiber.New()
-	restapi.RegisterRouters(app, linkSvc)
+	restapi.RegisterRouters(app, linkSvc, *cfg)
 
 	log.Fatal(app.Listen(":" + cfg.Http.Port))
 }

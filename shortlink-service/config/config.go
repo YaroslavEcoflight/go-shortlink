@@ -8,10 +8,11 @@ import (
 
 type (
 	Config struct {
-		App    app `envPrefix:"APP_"`
-		Http   http
-		Pg     pg
-		Secret secret
+		App    app    `envPrefix:"APP_"`
+		Http   http   `envPrefix:"HTTP_"`
+		Pg     pg     `envPrefix:"PG_"`
+		Redis  redis  `envPrefix:"REDIS_"`
+		Secret secret `envPrefix:"SECRET_"`
 	}
 
 	app struct {
@@ -24,7 +25,13 @@ type (
 	}
 
 	http struct {
-		Port string `env:"HTTP_PORT,required"`
+		Port string `env:"PORT,required"`
+	}
+
+	redis struct {
+		Addr     string `env:"ADDR,required"`
+		User     string `env:"USER"`
+		Password string `env:"PASSWORD"`
 	}
 
 	pg struct {
@@ -40,6 +47,10 @@ type (
 func (p pg) DSN() string {
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		p.Host, p.Port, p.User, p.Password, p.DBName, p.SSLMode)
+}
+
+func (r redis) URL() string {
+	return r.Addr
 }
 
 func NewConfig() (*Config, error) {
