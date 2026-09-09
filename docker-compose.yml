@@ -55,6 +55,46 @@ services:
     networks:
       - shortlink
 
+  analytics-service:
+    build:
+      context: ./analytics-service
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "${ANALYTICS_GRPC_PORT}:${ANALYTICS_GRPC_PORT}"
+    environment:
+      APP_NAME: analytics-service
+      APP_VERSION: ${ANALYTICS_APP_VERSION}
+      HTTP_PORT: ${ANALYTICS_HTTP_PORT}
+      GRPC_PORT: ${ANALYTICS_GRPC_PORT}
+      PG_HOST: analytics-pg
+      PG_PORT: ${POSTGRES_PORT}
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_DBNAME: analytics
+      PG_SSLMODE: ${POSTGRES_SSLMODE}
+    depends_on:
+      analytics-pg:
+        condition: service_healthy
+    networks:
+      - shortlink
+
+  analytics-pg:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: analytics
+    volumes:
+      - analytics_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shortlink
+
   pg:
     image: postgres:17-alpine
     environment:
@@ -90,6 +130,7 @@ services:
 volumes:
   pg_data:
   redis_data:
+  analytics_pg_data:
 
 networks:
   shortlink:

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package analytics;
 
-option go_package = "go-shortlink/proto/analytics"
+option go_package = "analytics-service/proto/analytics";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -18,15 +18,12 @@ enum EventStatus {
 }
 
 message RecordEventRequest {
-  string event_type = 1;
-  EventStatus status = 2;
-  string error_code = 2;
-  string user_id = 5; 
-  string ip = 8;
-
-  google.protobuf.Timestamp occurred_at = 11;
-
-  map<string, string> meta = 12;
+  string      event_type   = 1;
+  EventStatus status       = 2;
+  string      error_code   = 3;
+  string      user_id      = 4;
+  string      ip           = 5;
+  google.protobuf.Timestamp occurred_at = 6;
 }
 
 
