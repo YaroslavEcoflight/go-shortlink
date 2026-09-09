@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package analytics;
-
-option go_package = "go-shortlink/proto/analytics"
-
-import "google/protobuf/empty.proto";
-
-service Anay
