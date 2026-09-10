@@ -2,6 +2,7 @@ package restapi
 
 import (
 	"shortlink-service/config"
+	"shortlink-service/internal/domain"
 	"shortlink-service/internal/domain/service"
 	"shortlink-service/internal/infrastructure/analytics"
 	"shortlink-service/internal/transport/restapi/middleware"
@@ -9,8 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterRouters(r fiber.Router, svc service.LinkService, cfg config.Config, ac *analytics.Client) {
-	h := NewLinkHandler(svc, ac)
+func RegisterRouters(r fiber.Router, svc service.LinkService, cfg config.Config, ac *analytics.Client, log domain.Interface) {
+	h := NewLinkHandler(svc, ac, log)
 
 	r.Get("/:code", h.Redirect)
 

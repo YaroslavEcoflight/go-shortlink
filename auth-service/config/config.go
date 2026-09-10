@@ -17,8 +17,9 @@ type (
 	}
 
 	app struct {
-		Name    string `env:"NAME,required"`
-		Version string `env:"VERSION,required"`
+		Name     string `env:"NAME,required"`
+		Version  string `env:"VERSION,required"`
+		LogLevel string `env:"LOG_LEVEL" envDefault:"info"`
 	}
 
 	secret struct {

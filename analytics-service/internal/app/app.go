@@ -1,10 +1,10 @@
 package app
 
 import (
-	"log"
 	"net"
 
 	"analytics-service/config"
+	"analytics-service/internal/infrastructure/logger"
 	"analytics-service/internal/infrastructure/postgres"
 	inframodels "analytics-service/internal/infrastructure/postgres/models"
 	transportgrpc "analytics-service/internal/transport/grpc"
@@ -18,36 +18,41 @@ import (
 func Run() {
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+
+	log := logger.New(cfg.App.LogLevel)
+	log.Info("starting %s v%s", cfg.App.Name, cfg.App.Version)
 
 	db, err := postgres.New(cfg.Pg.DSN())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("postgres: %v", err)
 	}
 	db.AutoMigrate(&inframodels.Event{})
 
 	eventRepo := postgres.NewEventRepo(db)
 	uc := usecase.NewAnalyticsUsecase(eventRepo)
 
-	handler := transportgrpc.NewHandler(uc)
+	handler := transportgrpc.NewHandler(uc, log)
 	srv := transportgrpc.NewServer(handler)
 
 	lis, err := net.Listen("tcp", ":"+cfg.Grpc.Port)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("grpc listener: %v", err)
 	}
 
 	go func() {
-		log.Printf("gRPC server listening on :%s", cfg.Grpc.Port)
+		log.Info("gRPC server listening on :%s", cfg.Grpc.Port)
 		if err := srv.Serve(lis); err != nil && err != grpc.ErrServerStopped {
-			log.Fatal(err)
+			log.Fatal("gRPC server: %v", err)
 		}
 	}()
 
 	app := fiber.New()
-	restapi.RegisterRouters(app, uc, cfg.Secret.JWTSecret)
+	restapi.RegisterRouters(app, uc, cfg.Secret.JWTSecret, log)
 
-	log.Printf("HTTP server listening on :%s", cfg.Http.Port)
-	log.Fatal(app.Listen(":" + cfg.Http.Port))
+	log.Info("HTTP server listening on :%s", cfg.Http.Port)
+	if err := app.Listen(":" + cfg.Http.Port); err != nil {
+		log.Fatal("HTTP server: %v", err)
+	}
 }

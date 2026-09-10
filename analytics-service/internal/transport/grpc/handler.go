@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"analytics-service/internal/domain"
 	"analytics-service/internal/domain/entity"
 	"analytics-service/internal/usecase"
 	pb "analytics-service/proto/analytics"
@@ -12,11 +13,12 @@ import (
 
 type Handler struct {
 	pb.UnimplementedAnalyticsServiceServer
-	uc *usecase.AnalyticsUsecase
+	uc  *usecase.AnalyticsUsecase
+	log domain.Interface
 }
 
-func NewHandler(uc *usecase.AnalyticsUsecase) *Handler {
-	return &Handler{uc: uc}
+func NewHandler(uc *usecase.AnalyticsUsecase, log domain.Interface) *Handler {
+	return &Handler{uc: uc, log: log}
 }
 
 func (h *Handler) RecordEvent(ctx context.Context, req *pb.RecordEventRequest) (*emptypb.Empty, error) {
@@ -28,7 +30,12 @@ func (h *Handler) RecordEvent(ctx context.Context, req *pb.RecordEventRequest) (
 		IP:         req.Ip,
 		OccurredAt: req.OccurredAt.AsTime(),
 	}
-	return &emptypb.Empty{}, h.uc.RecordEvent(ctx, e)
+	if err := h.uc.RecordEvent(ctx, e); err != nil {
+		h.log.Error("RecordEvent type=%s user=%s: %v", req.EventType, req.UserId, err)
+		return &emptypb.Empty{}, err
+	}
+	h.log.Debug("RecordEvent type=%s user=%s status=%s", req.EventType, req.UserId, req.Status)
+	return &emptypb.Empty{}, nil
 }
 
 func protoStatusToEntity(s pb.EventStatus) entity.EventStatus {

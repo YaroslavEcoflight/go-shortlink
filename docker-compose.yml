@@ -9,6 +9,7 @@ services:
     environment:
       APP_NAME: auth-service
       APP_VERSION: ${AUTH_APP_VERSION}
+      APP_LOG_LEVEL: ${LOG_LEVEL}
       HTTP_PORT: ${AUTH_HTTP_PORT}
       JWT_SECRET: ${JWT_SECRET}
       POSTGRES_HOST: pg
@@ -41,6 +42,7 @@ services:
     environment:
       APP_NAME: shortlink-service
       APP_VERSION: ${SHORTLINK_APP_VERSION}
+      APP_LOG_LEVEL: ${LOG_LEVEL}
       HTTP_PORT: ${SHORTLINK_HTTP_PORT}
       SECRET_JWT_SECRET: ${JWT_SECRET}
       PG_HOST: pg
@@ -72,6 +74,7 @@ services:
     environment:
       APP_NAME: analytics-service
       APP_VERSION: ${ANALYTICS_APP_VERSION}
+      APP_LOG_LEVEL: ${LOG_LEVEL}
       HTTP_PORT: ${ANALYTICS_HTTP_PORT}
       GRPC_PORT: ${ANALYTICS_GRPC_PORT}
       SECRET_JWT_SECRET: ${JWT_SECRET}
