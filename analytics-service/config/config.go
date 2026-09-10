@@ -8,10 +8,11 @@ import (
 
 type (
 	Config struct {
-		App  app  `envPrefix:"APP_"`
-		Http http `envPrefix:"HTTP_"`
-		Grpc grpc `envPrefix:"GRPC_"`
-		Pg   pg   `envPrefix:"PG_"`
+		App    app    `envPrefix:"APP_"`
+		Http   http   `envPrefix:"HTTP_"`
+		Grpc   grpc   `envPrefix:"GRPC_"`
+		Pg     pg     `envPrefix:"PG_"`
+		Secret secret `envPrefix:"SECRET_"`
 	}
 
 	app struct {
@@ -25,6 +26,10 @@ type (
 
 	grpc struct {
 		Port string `env:"PORT,required"`
+	}
+
+	secret struct {
+		JWTSecret string `env:"JWT_SECRET,required"`
 	}
 
 	pg struct {

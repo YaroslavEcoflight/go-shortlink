@@ -46,7 +46,7 @@ func Run() {
 	}()
 
 	app := fiber.New()
-	restapi.RegisterRouters(app, uc)
+	restapi.RegisterRouters(app, uc, cfg.Secret.JWTSecret)
 
 	log.Printf("HTTP server listening on :%s", cfg.Http.Port)
 	log.Fatal(app.Listen(":" + cfg.Http.Port))
