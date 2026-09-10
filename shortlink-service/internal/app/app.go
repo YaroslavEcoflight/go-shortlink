@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"shortlink-service/config"
+	infraAnalytics "shortlink-service/internal/infrastructure/analytics"
 	"shortlink-service/internal/infrastructure/postgres"
 	inframodels "shortlink-service/internal/infrastructure/postgres/models"
 	"shortlink-service/internal/infrastructure/redis"
@@ -18,6 +19,11 @@ func Run() {
 	ctx := context.Background()
 
 	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	analyticsClient, err := infraAnalytics.NewClient(cfg.Analytics.Addr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +44,7 @@ func Run() {
 	linkSvc := usecase.NewLinkService(&linkRepo, linkCache)
 
 	app := fiber.New()
-	restapi.RegisterRouters(app, linkSvc, *cfg)
+	restapi.RegisterRouters(app, linkSvc, *cfg, analyticsClient)
 
 	log.Fatal(app.Listen(":" + cfg.Http.Port))
 }

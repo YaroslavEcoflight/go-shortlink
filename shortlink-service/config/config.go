@@ -8,11 +8,16 @@ import (
 
 type (
 	Config struct {
-		App    app    `envPrefix:"APP_"`
-		Http   http   `envPrefix:"HTTP_"`
-		Pg     pg     `envPrefix:"PG_"`
-		Redis  redis  `envPrefix:"REDIS_"`
-		Secret secret `envPrefix:"SECRET_"`
+		App       app       `envPrefix:"APP_"`
+		Http      http      `envPrefix:"HTTP_"`
+		Pg        pg        `envPrefix:"PG_"`
+		Redis     redis     `envPrefix:"REDIS_"`
+		Secret    secret    `envPrefix:"SECRET_"`
+		Analytics analytics `envPrefix:"ANALYTICS_"`
+	}
+
+	analytics struct {
+		Addr string `env:"ADDR,required"`
 	}
 
 	app struct {
