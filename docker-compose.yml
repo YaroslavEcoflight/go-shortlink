@@ -20,11 +20,14 @@ services:
       REDIS_ADDR: redis:${REDIS_PORT}
       REDIS_HOST: ""
       REDIS_PORT: ""
+      ANALYTICS_ADDR: ${ANALYTICS_ADDR}
     depends_on:
       pg:
         condition: service_healthy
       redis:
         condition: service_healthy
+      analytics-service:
+        condition: service_started
     networks:
       - shortlink
 
@@ -47,11 +50,14 @@ services:
       PG_DBNAME: ${POSTGRES_DB}
       PG_SSLMODE: ${POSTGRES_SSLMODE}
       REDIS_ADDR: redis:${REDIS_PORT}
+      ANALYTICS_ADDR: ${ANALYTICS_ADDR}
     depends_on:
       pg:
         condition: service_healthy
       redis:
         condition: service_healthy
+      analytics-service:
+        condition: service_started
     networks:
       - shortlink
 
@@ -62,36 +68,21 @@ services:
       target: runner
     ports:
       - "${ANALYTICS_GRPC_PORT}:${ANALYTICS_GRPC_PORT}"
+      - "${ANALYTICS_HTTP_PORT}:${ANALYTICS_HTTP_PORT}"
     environment:
       APP_NAME: analytics-service
       APP_VERSION: ${ANALYTICS_APP_VERSION}
       HTTP_PORT: ${ANALYTICS_HTTP_PORT}
       GRPC_PORT: ${ANALYTICS_GRPC_PORT}
-      PG_HOST: analytics-pg
+      PG_HOST: pg
       PG_PORT: ${POSTGRES_PORT}
       PG_USER: ${POSTGRES_USER}
       PG_PASSWORD: ${POSTGRES_PASSWORD}
-      PG_DBNAME: analytics
+      PG_DBNAME: ${POSTGRES_DB}
       PG_SSLMODE: ${POSTGRES_SSLMODE}
     depends_on:
-      analytics-pg:
+      pg:
         condition: service_healthy
-    networks:
-      - shortlink
-
-  analytics-pg:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: analytics
-    volumes:
-      - analytics_pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d analytics"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     networks:
       - shortlink
 
@@ -130,7 +121,6 @@ services:
 volumes:
   pg_data:
   redis_data:
-  analytics_pg_data:
 
 networks:
   shortlink:

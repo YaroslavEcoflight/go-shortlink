@@ -8,8 +8,10 @@ import (
 	"analytics-service/internal/infrastructure/postgres"
 	inframodels "analytics-service/internal/infrastructure/postgres/models"
 	transportgrpc "analytics-service/internal/transport/grpc"
+	"analytics-service/internal/transport/restapi"
 	"analytics-service/internal/usecase"
 
+	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc"
 )
 
@@ -36,8 +38,16 @@ func Run() {
 		log.Fatal(err)
 	}
 
-	log.Printf("gRPC server listening on :%s", cfg.Grpc.Port)
-	if err := srv.Serve(lis); err != nil && err != grpc.ErrServerStopped {
-		log.Fatal(err)
-	}
+	go func() {
+		log.Printf("gRPC server listening on :%s", cfg.Grpc.Port)
+		if err := srv.Serve(lis); err != nil && err != grpc.ErrServerStopped {
+			log.Fatal(err)
+		}
+	}()
+
+	app := fiber.New()
+	restapi.RegisterRouters(app, uc)
+
+	log.Printf("HTTP server listening on :%s", cfg.Http.Port)
+	log.Fatal(app.Listen(":" + cfg.Http.Port))
 }
